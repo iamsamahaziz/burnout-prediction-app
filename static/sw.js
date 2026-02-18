@@ -1,4 +1,3 @@
-// Service Worker - Burnout Prediction App
 var CACHE_NAME = 'burnout-v2';
 var urlsToCache = [
     '/',
@@ -17,9 +16,7 @@ self.addEventListener('install', function (event) {
 self.addEventListener('fetch', function (event) {
     event.respondWith(
         caches.match(event.request).then(function (response) {
-            // Network first, fallback to cache
             return fetch(event.request).then(function (networkResponse) {
-                // Update cache with fresh copy
                 if (networkResponse && networkResponse.status === 200) {
                     var responseClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then(function (cache) {
@@ -28,7 +25,7 @@ self.addEventListener('fetch', function (event) {
                 }
                 return networkResponse;
             }).catch(function () {
-                return response; // Fallback to cached version
+                return response;
             });
         })
     );

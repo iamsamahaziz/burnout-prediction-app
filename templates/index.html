@@ -15,13 +15,11 @@
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#0a0e1a">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 
 <body>
 
-    <!-- Background Effect -->
     <div class="bg-particles">
         <div class="orb"></div>
         <div class="orb"></div>
@@ -30,7 +28,6 @@
 
     <div class="app-container">
 
-        <!-- Header -->
         <header class="app-header">
             <div class="header-top">
                 <span class="logo-icon">🔥</span>
@@ -42,11 +39,9 @@
             <p class="subtitle">AI-Powered Employee Risk Assessment</p>
         </header>
 
-        <!-- Form Card -->
         <div class="glass-card">
             <form action="/predict" method="POST" id="burnout-form">
 
-                <!-- Personal Info -->
                 <div class="form-section-title">Personal Information</div>
                 <div class="form-grid">
                     <div class="form-group">
@@ -77,7 +72,6 @@
                     </div>
                 </div>
 
-                <!-- Work Conditions -->
                 <div class="form-section-title" style="margin-top: 32px;">Work Conditions</div>
                 <div class="form-grid">
                     <div class="form-group">
@@ -110,7 +104,6 @@
                     </div>
                 </div>
 
-                <!-- Wellbeing -->
                 <div class="form-section-title" style="margin-top: 32px;">Wellbeing Assessment</div>
 
                 <div class="form-group">
@@ -150,11 +143,9 @@
             </form>
         </div>
 
-        <!-- ============ RESULTS ============ -->
         {% if result %}
         <div id="result-section">
 
-            <!-- GAUGE + STATUS -->
             <div class="glass-card result-card {{ result_class }}" id="result-card-main">
                 <div class="gauge-container">
                     <svg class="gauge-svg" viewBox="0 0 200 200">
@@ -171,7 +162,6 @@
                 <div class="result-status">{{ result }}</div>
                 <p class="result-description">{{ result_description }}</p>
 
-                <!-- Action Buttons -->
                 <div class="result-actions">
                     <button class="btn-action btn-pdf" id="btn-download-pdf" title="Download PDF Report">
                         📄 Download Report
@@ -189,9 +179,7 @@
                 <div class="share-toast" id="share-toast">✅ Link copied!</div>
             </div>
 
-            <!-- DASHBOARD - Factor Breakdown + Radar -->
             <div class="dashboard-grid">
-                <!-- Risk Factor Bars -->
                 <div class="glass-card dashboard-card">
                     <h3 class="dashboard-title">📊 Risk Factor Breakdown</h3>
                     {% for factor in factor_breakdown %}
@@ -209,7 +197,6 @@
                     {% endfor %}
                 </div>
 
-                <!-- Radar Chart -->
                 <div class="glass-card dashboard-card">
                     <h3 class="dashboard-title">🎯 Risk Profile</h3>
                     <div class="chart-wrapper">
@@ -218,7 +205,6 @@
                 </div>
             </div>
 
-            <!-- Trend Chart (from history) -->
             <div class="glass-card" style="margin-top: 20px;">
                 <h3 class="dashboard-title">📈 Burnout Score Trend</h3>
                 <div class="chart-wrapper chart-wide">
@@ -226,7 +212,6 @@
                 </div>
             </div>
 
-            <!-- Industry Comparison -->
             {% if industry %}
             <div class="glass-card industry-card" style="margin-top: 20px;">
                 <h3 class="dashboard-title">📊 Industry Comparison</h3>
@@ -269,7 +254,6 @@
             </div>
             {% endif %}
 
-            <!-- Recommendations -->
             {% if recommendations %}
             <div class="glass-card recommendations" style="margin-top: 20px;">
                 <h3>💡 Personalized Recommendations</h3>
@@ -284,7 +268,6 @@
             </div>
             {% endif %}
 
-            <!-- 30-Day Action Plan -->
             {% if action_plan %}
             <div class="glass-card action-plan" style="margin-top: 20px;">
                 <h3>🎯 Your 30-Day Wellness Plan</h3>
@@ -316,7 +299,6 @@
         </div>
         {% endif %}
 
-        <!-- ============ BREATHING EXERCISE ============ -->
         <div class="glass-card breathing-section" style="margin-top: 24px;">
             <h3 class="dashboard-title">🌬️ Breathing Exercise</h3>
             <p class="breathing-subtitle">The 4-7-8 technique - proven to reduce stress and anxiety in minutes</p>
@@ -335,7 +317,6 @@
             </div>
         </div>
 
-        <!-- ============ MOOD TRACKER ============ -->
         <div class="glass-card mood-section" style="margin-top: 24px;">
             <h3 class="dashboard-title">😊 Daily Mood Tracker</h3>
             <p class="mood-subtitle">Track how you feel every day - patterns reveal insights</p>
@@ -355,7 +336,6 @@
             <div class="mood-streak" id="mood-streak"></div>
         </div>
 
-        <!-- History -->
         <div class="history-section glass-card" id="history-section" style="margin-top: 24px; display: none;">
             <div class="history-header">
                 <h3>📋 Recent Assessments</h3>
@@ -366,7 +346,6 @@
             </div>
         </div>
 
-        <!-- Footer -->
         <footer class="app-footer">
             <p>Built by <a href="https://github.com/iamsamahaziz" target="_blank">Samah AZIZ</a> · Powered by Machine
                 Learning</p>
@@ -393,7 +372,6 @@
     </script>
     {% endif %}
 
-    <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")

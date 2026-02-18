@@ -1,22 +1,11 @@
-// =====================================================
-//  BURNOUT PREDICTION APP - Client-Side Logic
-// =====================================================
-
 document.addEventListener('DOMContentLoaded', function () {
-    // ── Sliders ──
     initSliders();
-    // ── History ──
     loadHistory();
-    // ── Theme ──
     initThemeToggle();
-    // ── Mood Calendar ──
     loadMoodCalendar();
 });
 
 
-// =====================================================
-//  SLIDERS - Real-time values + colored track
-// =====================================================
 function initSliders() {
     const stressSlider = document.getElementById('stress');
     const stressValue = document.getElementById('stress-value');
@@ -50,9 +39,6 @@ function updateSliderTrack(slider) {
 }
 
 
-// =====================================================
-//  GAUGE ANIMATION  (SVG circular gauge)
-// =====================================================
 function animateGauge(targetValue) {
     var gaugeFill = document.querySelector('.gauge-fill');
     var gaugeNumber = document.getElementById('gauge-number');
@@ -83,14 +69,10 @@ function animateGauge(targetValue) {
 }
 
 
-// =====================================================
-//  FACTOR BARS ANIMATION
-// =====================================================
 function animateFactorBars() {
     var bars = document.querySelectorAll('.factor-bar-fill');
     bars.forEach(function (bar, i) {
         var value = parseInt(bar.getAttribute('data-value'));
-        // Color gradient based on severity (purple theme)
         var color;
         if (value >= 70) color = 'linear-gradient(90deg, #dc2626, #ef4444)';
         else if (value >= 45) color = 'linear-gradient(90deg, #e67e22, #f59e0b)';
@@ -103,9 +85,6 @@ function animateFactorBars() {
 }
 
 
-// =====================================================
-//  CHART.JS - Radar Chart
-// =====================================================
 function renderRadarChart(stress, hours, satisfaction, remote) {
     var ctx = document.getElementById('radarChart');
     if (!ctx) return;
@@ -114,11 +93,10 @@ function renderRadarChart(stress, hours, satisfaction, remote) {
     var gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
     var labelColor = isDark ? '#94a3b8' : '#64748b';
 
-    // Normalize all values to 0-100
     var stressNorm = (stress / 10) * 100;
     var hoursNorm = Math.min((hours / 80) * 100, 100);
-    var satNorm = ((5 - satisfaction) / 4) * 100; // inverse - low sat = high risk
-    var remoteNorm = ((100 - remote) / 100) * 100; // inverse - low remote = high risk
+    var satNorm = ((5 - satisfaction) / 4) * 100;
+    var remoteNorm = ((100 - remote) / 100) * 100;
 
     new Chart(ctx, {
         type: 'radar',
@@ -167,9 +145,6 @@ function renderRadarChart(stress, hours, satisfaction, remote) {
 }
 
 
-// =====================================================
-//  CHART.JS - Trend Line Chart (from history)
-// =====================================================
 function renderTrendChart() {
     var ctx = document.getElementById('trendChart');
     if (!ctx) return;
@@ -177,18 +152,15 @@ function renderTrendChart() {
     var history = JSON.parse(localStorage.getItem('burnout_history') || '[]');
     var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
 
-    // Need at least 1 data point
     if (history.length === 0) {
         ctx.parentNode.innerHTML = '<p style="text-align:center;color:' + (isDark ? '#64748b' : '#94a3b8') + ';padding:40px 0;">Complete more assessments to see your trend graph 📈</p>';
         return;
     }
 
-    // Reverse so oldest is first
     var data = history.slice().reverse();
     var labels = data.map(function (item) { return item.date; });
     var scores = data.map(function (item) { return item.score; });
 
-    // Gradient fill
     var gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
     gradient.addColorStop(0, 'rgba(139, 92, 246, 0.3)');
     gradient.addColorStop(1, 'rgba(139, 92, 246, 0.01)');
@@ -254,9 +226,6 @@ function renderTrendChart() {
 }
 
 
-// =====================================================
-//  HISTORY (localStorage)
-// =====================================================
 function saveToHistory(role, score, riskClass) {
     var history = JSON.parse(localStorage.getItem('burnout_history') || '[]');
     var entry = {
@@ -300,7 +269,6 @@ function loadHistory() {
             '</div>';
     }).join('');
 
-    // Clear button
     var clearBtn = document.getElementById('btn-clear-history');
     if (clearBtn) {
         clearBtn.onclick = function () {
@@ -311,14 +279,10 @@ function loadHistory() {
 }
 
 
-// =====================================================
-//  SHARE + PDF BUTTONS
-// =====================================================
 function initShareButtons(score, resultText) {
     var baseUrl = window.location.origin;
     var shareText = "I just assessed my burnout risk: " + score.toFixed(1) + "% - " + resultText + " 🔥 Check yours at " + baseUrl;
 
-    // Copy link
     var btnLink = document.getElementById('btn-share-link');
     if (btnLink) {
         btnLink.onclick = function () {
@@ -332,7 +296,6 @@ function initShareButtons(score, resultText) {
         };
     }
 
-    // LinkedIn
     var btnLinkedin = document.getElementById('btn-share-linkedin');
     if (btnLinkedin) {
         btnLinkedin.onclick = function () {
@@ -342,7 +305,6 @@ function initShareButtons(score, resultText) {
         };
     }
 
-    // Twitter/X
     var btnTwitter = document.getElementById('btn-share-twitter');
     if (btnTwitter) {
         btnTwitter.onclick = function () {
@@ -351,7 +313,6 @@ function initShareButtons(score, resultText) {
         };
     }
 
-    // PDF Download
     var btnPdf = document.getElementById('btn-download-pdf');
     if (btnPdf) {
         btnPdf.onclick = function () {
@@ -361,11 +322,7 @@ function initShareButtons(score, resultText) {
 }
 
 
-// =====================================================
-//  PDF REPORT GENERATION (window.print)
-// =====================================================
 function generatePDF(score, resultText) {
-    // Collect data from the page
     var factors = [];
     document.querySelectorAll('.factor-row').forEach(function (row) {
         factors.push({
@@ -392,7 +349,6 @@ function generatePDF(score, resultText) {
 
     var dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    // Build print HTML
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
         '<title>Burnout Assessment Report</title>' +
         '<style>' +
@@ -420,7 +376,6 @@ function generatePDF(score, resultText) {
         '<div class="score-section"><p class="score-num">' + score.toFixed(1) + '%</p>' +
         '<p class="score-label">' + resultText.replace(/[^\x20-\x7E]/g, '') + '</p></div>';
 
-    // Factors
     html += '<h2>Risk Factor Breakdown</h2>';
     factors.forEach(function (f) {
         var val = parseInt(f.val);
@@ -429,13 +384,11 @@ function generatePDF(score, resultText) {
             '<div class="factor-tip">' + f.tip + '</div></div>';
     });
 
-    // Recommendations
     html += '<h2>Recommendations</h2>';
     recs.forEach(function (r) {
         html += '<div class="rec">' + r + '</div>';
     });
 
-    // 30-day plan
     html += '<h2>30-Day Wellness Plan</h2>';
     weeks.forEach(function (w, i) {
         html += '<div class="week"><div class="week-title">Week ' + (i + 1) + ' - ' + w.title + '</div>';
@@ -448,7 +401,6 @@ function generatePDF(score, resultText) {
     html += '<div class="footer">Burnout Prediction App - Built by Samah AZIZ</div>';
     html += '</body></html>';
 
-    // Open print window
     var printWin = window.open('', '_blank', 'width=800,height=900');
     printWin.document.write(html);
     printWin.document.close();
@@ -459,15 +411,11 @@ function generatePDF(score, resultText) {
 }
 
 
-// =====================================================
-//  DARK / LIGHT THEME TOGGLE
-// =====================================================
 function initThemeToggle() {
     var toggle = document.getElementById('theme-toggle');
     var icon = document.getElementById('theme-icon');
     if (!toggle || !icon) return;
 
-    // Load saved preference
     var saved = localStorage.getItem('burnout_theme');
     if (saved === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
@@ -485,16 +433,12 @@ function initThemeToggle() {
             icon.textContent = '🌙';
             localStorage.setItem('burnout_theme', 'light');
         }
-        // Update slider tracks for new theme
         var sliders = document.querySelectorAll('input[type="range"]');
         sliders.forEach(function (s) { updateSliderTrack(s); });
     };
 }
 
 
-// =====================================================
-//  BREATHING EXERCISE (4-7-8 technique)
-// =====================================================
 var breathingActive = false;
 var breathingTimeout = null;
 var breathingCycles = 0;
@@ -538,7 +482,6 @@ function runBreathingCycle() {
                 if (breathingActive && breathingCycles < 4) {
                     runBreathingCycle();
                 } else {
-                    // Session complete
                     var text = document.getElementById('breathing-text');
                     if (text) text.textContent = 'Well Done! 🌟';
                     setTimeout(function () { stopBreathing(); }, 2000);
@@ -575,13 +518,9 @@ function updateCycleCounter() {
 }
 
 
-// =====================================================
-//  MOOD TRACKER
-// =====================================================
 var selectedMood = null;
 
 function selectMood(btn) {
-    // Deselect all
     document.querySelectorAll('.mood-btn').forEach(function (b) {
         b.classList.remove('mood-selected');
     });
@@ -610,7 +549,6 @@ function saveMood() {
     })
         .then(function (r) { return r.json(); })
         .then(function () {
-            // Reset UI
             document.querySelectorAll('.mood-btn').forEach(function (b) {
                 b.classList.remove('mood-selected');
             });
@@ -619,7 +557,6 @@ function saveMood() {
             var saveBtn = document.getElementById('btn-mood-save');
             if (saveBtn) saveBtn.disabled = true;
 
-            // Show confirmation
             var saveBtn2 = document.getElementById('btn-mood-save');
             if (saveBtn2) {
                 saveBtn2.textContent = '✅ Saved!';
@@ -644,7 +581,6 @@ function loadMoodCalendar() {
                 return;
             }
 
-            // Build last 30 days grid
             var today = new Date();
             var moodMap = {};
             moods.forEach(function (m) { moodMap[m.date] = m; });
@@ -669,7 +605,6 @@ function loadMoodCalendar() {
             html += '</div>';
             calEl.innerHTML = html;
 
-            // Calculate streak
             var streak = 0;
             for (var j = 0; j < 30; j++) {
                 var sd = new Date(today);

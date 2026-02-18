@@ -14,9 +14,6 @@ model_columns = ['Age', 'Experience', 'WorkHoursPerWeek', 'RemoteRatio',
                  'SatisfactionLevel', 'StressLevel', 'Gender_Male',
                  'JobRole_Engineer', 'JobRole_HR', 'JobRole_Manager', 'JobRole_Sales']
 
-# ──────────────────────────────────────────────
-#  INDUSTRY BENCHMARKS (simulated averages)
-# ──────────────────────────────────────────────
 INDUSTRY_BENCHMARKS = {
     "Engineer": {"avg_score": 42, "avg_stress": 6.2, "avg_hours": 47, "sample_size": 12400},
     "Analyst": {"avg_score": 38, "avg_stress": 5.8, "avg_hours": 44, "sample_size": 8700},
@@ -28,7 +25,6 @@ GLOBAL_AVG = {"avg_score": 43, "avg_stress": 6.2, "avg_hours": 46.5, "sample_siz
 
 
 def get_industry_comparison(job_role, probability, stress, work_hours):
-    """Compare user's metrics against their role's benchmark."""
     bench = INDUSTRY_BENCHMARKS.get(job_role, GLOBAL_AVG)
     score_diff = round(probability - bench["avg_score"], 1)
     stress_diff = round(stress - bench["avg_stress"], 1)
@@ -48,14 +44,9 @@ def get_industry_comparison(job_role, probability, stress, work_hours):
     }
 
 
-# ──────────────────────────────────────────────
-#  RISK FACTOR BREAKDOWN
-# ──────────────────────────────────────────────
 def get_factor_breakdown(stress, work_hours, satisfaction, remote_ratio):
-    """Compute individual contribution of each factor to burnout risk."""
     factors = []
 
-    # Stress contribution (max ~35%)
     if stress >= 8:
         s = 95
     elif stress >= 6:
@@ -67,7 +58,6 @@ def get_factor_breakdown(stress, work_hours, satisfaction, remote_ratio):
     factors.append({"name": "Stress Level", "value": s, "raw": stress, "max": 10,
                     "icon": "😰", "tip": "High stress is the #1 burnout driver."})
 
-    # Work hours contribution (max ~30%)
     if work_hours >= 60:
         w = 95
     elif work_hours >= 50:
@@ -79,12 +69,10 @@ def get_factor_breakdown(stress, work_hours, satisfaction, remote_ratio):
     factors.append({"name": "Work Hours", "value": w, "raw": work_hours, "max": 80,
                     "icon": "⏰", "tip": "Overwork erodes recovery capacity."})
 
-    # Satisfaction (inverse - low = bad, max ~20%)
     sat_score = max(5, 100 - (satisfaction * 20))
     factors.append({"name": "Low Satisfaction", "value": round(sat_score), "raw": satisfaction, "max": 5,
                     "icon": "😞", "tip": "Dissatisfaction fuels emotional exhaustion."})
 
-    # Remote ratio (inverse - less remote = worse)
     if remote_ratio < 20:
         r = 70
     elif remote_ratio < 40:
@@ -99,11 +87,7 @@ def get_factor_breakdown(stress, work_hours, satisfaction, remote_ratio):
     return factors
 
 
-# ──────────────────────────────────────────────
-#  RECOMMENDATIONS ENGINE
-# ──────────────────────────────────────────────
 def get_recommendations(probability, stress, work_hours, satisfaction, remote_ratio):
-    """Return personalized recommendations based on risk factors."""
     recs = []
 
     if stress >= 7:
@@ -135,14 +119,9 @@ def get_recommendations(probability, stress, work_hours, satisfaction, remote_ra
     return recs
 
 
-# ──────────────────────────────────────────────
-#  30-DAY ACTION PLAN
-# ──────────────────────────────────────────────
 def get_action_plan(probability, stress, work_hours, satisfaction, remote_ratio):
-    """Generate a 4-week progressive wellness plan."""
     plan = []
 
-    # Week 1 - Awareness
     w1_tasks = []
     w1_tasks.append("Track your daily energy levels in a journal (morning, midday, evening)")
     if stress >= 6:
@@ -152,7 +131,6 @@ def get_action_plan(probability, stress, work_hours, satisfaction, remote_ratio)
     w1_tasks.append("Identify your top 3 workplace frustrations and write them down")
     plan.append({"week": 1, "title": "Awareness & Baseline", "icon": "🔍", "tasks": w1_tasks})
 
-    # Week 2 - Small Changes
     w2_tasks = []
     if stress >= 5:
         w2_tasks.append("Add a 10-minute guided meditation to your daily routine")
@@ -164,7 +142,6 @@ def get_action_plan(probability, stress, work_hours, satisfaction, remote_ratio)
     w2_tasks.append("Exercise at least 3 times this week - even a 20-min walk counts")
     plan.append({"week": 2, "title": "Small Changes", "icon": "🌱", "tasks": w2_tasks})
 
-    # Week 3 - Building Habits
     w3_tasks = []
     w3_tasks.append("Practice time-blocking: plan tomorrow's top 3 tasks every evening")
     if stress >= 6:
@@ -175,7 +152,6 @@ def get_action_plan(probability, stress, work_hours, satisfaction, remote_ratio)
     w3_tasks.append("Say 'no' to at least one non-essential request this week")
     plan.append({"week": 3, "title": "Building Habits", "icon": "🔧", "tasks": w3_tasks})
 
-    # Week 4 - Sustain & Evaluate
     w4_tasks = []
     w4_tasks.append("Re-take the burnout assessment and compare your score to Week 1")
     w4_tasks.append("Review your energy journal: identify patterns and peak/low times")
@@ -188,9 +164,6 @@ def get_action_plan(probability, stress, work_hours, satisfaction, remote_ratio)
     return plan
 
 
-# ──────────────────────────────────────────────
-#  ROUTES
-# ──────────────────────────────────────────────
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -225,7 +198,6 @@ def predict():
         features_scaled = scaler.transform(df)
         probability = model.predict_proba(features_scaled)[0][1] * 100
 
-        # Determine result category
         if probability < 20:
             result = "✅ Low Burnout Risk"
             result_class = "result-low"
@@ -257,7 +229,6 @@ def predict():
                                factor_breakdown=factor_breakdown,
                                action_plan=action_plan,
                                industry=industry_comparison,
-                               # Pass raw values for charts
                                stress_val=stress,
                                hours_val=work_hours,
                                satisfaction_val=satisfaction,
@@ -275,9 +246,6 @@ def predict():
                                action_plan=[])
 
 
-# ──────────────────────────────────────────────
-#  MOOD TRACKER API
-# ──────────────────────────────────────────────
 MOOD_FILE = os.path.join(os.path.dirname(__file__), "mood_data.json")
 
 
@@ -295,7 +263,6 @@ def mood_api():
             "emoji": data.get("emoji", "😐"),
             "note": data.get("note", "")
         })
-        # Keep last 90 days
         moods = moods[-90:]
         with open(MOOD_FILE, "w") as f:
             json.dump(moods, f)
@@ -309,9 +276,5 @@ def mood_api():
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
-=======
-    app.run()
->>>>>>> 48b13cd1b9c54d6a82c778b3139bca2386409c78
