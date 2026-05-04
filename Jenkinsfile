@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        string(
+            name: 'APP_PORT_INPUT',
+            defaultValue: '5000',
+            description: '🌐 Port sur lequel déployer l\'application (ex: 5000, 5001...)'
+        )
+    }
+
     options {
         timeout(time: 20, unit: 'MINUTES')
         timestamps()
@@ -8,11 +16,11 @@ pipeline {
     }
 
     environment {
-        APP_NAME    = "burnout_tracker"
-        APP_PORT    = "5000"
-        VENV_DIR    = "/var/jenkins_home/venv/burnout"
-        PYTHON      = "/var/jenkins_home/venv/burnout/bin/python"
-        PIP         = "/var/jenkins_home/venv/burnout/bin/pip"
+        APP_NAME    = "burnout_dev_container"
+        APP_PORT    = "${params.APP_PORT_INPUT ?: '5000'}"
+        VENV_DIR    = "/var/jenkins_home/venv/burnout_dev"
+        PYTHON      = "/var/jenkins_home/venv/burnout_dev/bin/python"
+        PIP         = "/var/jenkins_home/venv/burnout_dev/bin/pip"
     }
 
     stages {
