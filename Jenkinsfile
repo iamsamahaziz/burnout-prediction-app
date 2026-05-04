@@ -158,10 +158,10 @@ print('✅ Modèle et Scaler chargés avec succès.')
                 sh '''
                 echo "Lancement des tests de prédiction sur le conteneur actif..."
                 # On remplace temporairement localhost par le nom du conteneur pour le test
-                sed -i 's/localhost/burnout_tracker/g' test_predict.py
+                sed -i "s/localhost/${APP_NAME}/g" test_predict.py
                 "$PYTHON" test_predict.py
                 # On remet localhost pour garder le fichier propre
-                sed -i 's/burnout_tracker/localhost/g' test_predict.py
+                sed -i "s/${APP_NAME}/localhost/g" test_predict.py
                 '''
             }
         }
