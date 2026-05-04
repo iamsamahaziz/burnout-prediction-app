@@ -121,15 +121,6 @@ print('✅ Modèle et Scaler chargés avec succès.')
             }
         }
 
-        stage('5. Tests Unitaires') {
-            steps {
-                sh '''
-                echo "Lancement des tests de prédiction..."
-                [ -f "test_predict.py" ] && "$PYTHON" test_predict.py || echo "⚠️ Pas de fichier test_predict.py trouvé."
-                '''
-            }
-        }
-
         stage('6. Déploiement & Santé') {
             steps {
                 script {
@@ -141,28 +132,45 @@ print('✅ Modèle et Scaler chargés avec succès.')
                     docker stop ${APP_NAME} || true
                     docker rm ${APP_NAME} || true
                     
-                    # Lancement
-                    docker run -d --name ${APP_NAME} -p ${APP_PORT}:5000 ${APP_NAME}:latest
+                    # Création du réseau si absent
+                    docker network create fstm_network 2>/dev/null || true
+                    docker network connect fstm_network fstm_jenkins 2>/dev/null || true
+
+                    # Lancement sur le réseau commun
+                    docker run -d --name ${APP_NAME} --network fstm_network -p ${APP_PORT}:5000 ${APP_NAME}:latest
                     
                     echo "⏳ Attente du démarrage de l'application..."
-                    sleep 10
+                    sleep 15
                     '''
 
-                    // Vérification de santé (Self-Healing)
-                    def appOK = (sh(script: "curl -sf http://localhost:${env.APP_PORT}", returnStatus: true) == 0)
+                    // Vérification via le nom du conteneur (inter-container)
+                    def appOK = (sh(script: "curl -sf http://${env.APP_NAME}:5000", returnStatus: true) == 0)
                     if (!appOK) {
                         echo "⚠️ L'application ne répond pas. Tentative de redémarrage..."
                         sh "docker restart ${env.APP_NAME}"
-                        sleep 10
-                        appOK = (sh(script: "curl -sf http://localhost:${env.APP_PORT}", returnStatus: true) == 0)
+                        sleep 15
+                        appOK = (sh(script: "curl -sf http://${env.APP_NAME}:5000", returnStatus: true) == 0)
                     }
 
                     if (appOK) {
-                        echo "✅ Application Burnout déployée avec succès sur le port ${env.APP_PORT} !"
+                        echo "✅ Application Burnout déployée avec succès !"
                     } else {
-                        error "❌ ÉCHEC DU DÉPLOIEMENT : L'application ne répond pas."
+                        error "❌ ÉCHEC DU DÉPLOIEMENT : L'application ne répond pas sur le réseau Docker."
                     }
                 }
+            }
+        }
+
+        stage('7. Tests d\'Intégration') {
+            steps {
+                sh '''
+                echo "Lancement des tests de prédiction sur le conteneur actif..."
+                # On remplace temporairement localhost par le nom du conteneur pour le test
+                sed -i 's/localhost/burnout_tracker/g' test_predict.py
+                "$PYTHON" test_predict.py
+                # On remet localhost pour garder le fichier propre
+                sed -i 's/burnout_tracker/localhost/g' test_predict.py
+                '''
             }
         }
     }
