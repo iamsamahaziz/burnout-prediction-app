@@ -15,12 +15,7 @@ pipeline {
         disableConcurrentBuilds()
     }
 
-    environment {
-        // Ces variables seront configurées dynamiquement dans la première étape
-        VENV_DIR = "${WORKSPACE}/venv"
-        PYTHON   = "${WORKSPACE}/venv/bin/python"
-        PIP      = "${WORKSPACE}/venv/bin/pip"
-    }
+
 
     stages {
 
@@ -115,7 +110,7 @@ if p.stack: print('Balises non fermees'); sys.exit(1)
 
                 # Vérifie si tous les packages sont déjà installés
                 echo "Vérification des packages..."
-                MISSING=$("$PIP" install --dry-run -r requirements.txt -q 2>&1 | grep "Would install" || echo "")
+                MISSING=$("$PIP" install --dry-run -r requirements.txt 2>&1 | grep "Would install" || echo "")
 
                 if [ -z "$MISSING" ]; then
                     echo "Tous les packages déjà installés — rien à faire."
