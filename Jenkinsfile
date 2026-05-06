@@ -195,6 +195,13 @@ print('✅ Modèle et Scaler chargés avec succès.')
     post {
         success {
             echo "🎉 Pipeline BURNOUT terminé avec SUCCÈS sur la branche ${env.BRANCH_SLUG} !"
+            script {
+                if (env.IS_MAIN == 'false') {
+                    echo "Succès détecté sur branche feature : Nettoyage du conteneur éphémère..."
+                    sh "docker stop ${env.APP_NAME} || true"
+                    sh "docker rm   ${env.APP_NAME} || true"
+                }
+            }
         }
         failure {
             script {
