@@ -5,7 +5,7 @@ pipeline {
         string(
             name: 'APP_PORT_INPUT',
             defaultValue: '5000',
-            description: '🌐 Port sur lequel déployer l\'application (ex: 5000, 5001...)'
+            description: '🌐 Port sur lequel déployer l\'application (ex: 5000, 5001...) [Uniquement pour les branches de développement/feature]'
         )
     }
 
@@ -16,31 +16,43 @@ pipeline {
     }
 
     environment {
-        APP_NAME    = "burnout_dev_container"
-        APP_PORT    = "${params.APP_PORT_INPUT ?: '5000'}"
-        VENV_DIR    = "/var/jenkins_home/venv/burnout_dev"
-        PYTHON      = "/var/jenkins_home/venv/burnout_dev/bin/python"
-        PIP         = "/var/jenkins_home/venv/burnout_dev/bin/pip"
+        // Ces variables seront configurées dynamiquement dans la première étape
+        VENV_DIR = "${WORKSPACE}/venv"
+        PYTHON   = "${WORKSPACE}/venv/bin/python"
+        PIP      = "${WORKSPACE}/venv/bin/pip"
     }
 
     stages {
 
-        stage('0. Prérequis Système') {
+        stage('1. Préparation de l\'Environnement') {
             steps {
-                sh '''
-                echo "Vérification des outils système..."
-                command -v python3 || (apt-get update && apt-get install -y python3 python3-venv python3-pip)
-                command -v curl || (apt-get update && apt-get install -y curl)
-                python3 --version
-                curl --version
-                '''
-            }
-        }
-
-        stage('1. Récupération du Code') {
-            steps {
-                checkout scm
                 script {
+                    // Détection de la branche
+                    def rawBranch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: "main"
+                    def cleanBranch = rawBranch.split('/')[-1]
+                    env.BRANCH_SLUG = cleanBranch.replaceAll('[^a-zA-Z0-9]', '_').toLowerCase()
+
+                    echo "Branche détectée : ${env.BRANCH_SLUG}"
+
+                    if (env.BRANCH_SLUG == 'main' || env.BRANCH_SLUG == 'master') {
+                        // Configuration Production
+                        env.IS_MAIN = 'true'
+                        env.APP_NAME = "burnout_tracker"
+                        env.APP_PORT = "5000"
+                        env.VENV_DIR = "/var/jenkins_home/venv/burnout"
+                    } else {
+                        // Configuration Développement
+                        env.IS_MAIN = 'false'
+                        env.APP_NAME = "burnout_dev_${env.BRANCH_SLUG}"
+                        env.APP_PORT = "${params.APP_PORT_INPUT ?: '5000'}"
+                        env.VENV_DIR = "/var/jenkins_home/venv/burnout_${env.BRANCH_SLUG}"
+                    }
+
+                    // On redéfinit les chemins d'environnement virtuel en fonction de VENV_DIR
+                    env.PYTHON = "${env.VENV_DIR}/bin/python"
+                    env.PIP    = "${env.VENV_DIR}/bin/pip"
+
+                    checkout scm
                     def commitHash = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                     echo "🚀 Pipeline lancé sur le commit : ${commitHash}"
                 }
@@ -121,7 +133,7 @@ print('✅ Modèle et Scaler chargés avec succès.')
             }
         }
 
-        stage('6. Déploiement & Santé') {
+        stage('5. Déploiement & Santé') {
             steps {
                 script {
                     sh '''
@@ -161,7 +173,7 @@ print('✅ Modèle et Scaler chargés avec succès.')
             }
         }
 
-        stage('7. Tests d\'Intégration') {
+        stage('6. Tests d\'Intégration') {
             steps {
                 sh '''
                 echo "Lancement des tests de prédiction sur le conteneur actif..."
@@ -177,10 +189,18 @@ print('✅ Modèle et Scaler chargés avec succès.')
 
     post {
         success {
-            echo "🎉 Pipeline BURNOUT terminé avec SUCCÈS !"
+            echo "🎉 Pipeline BURNOUT terminé avec SUCCÈS sur la branche ${env.BRANCH_SLUG} !"
         }
         failure {
-            echo "❌ Pipeline BURNOUT ÉCHOUÉ."
+            script {
+                if (env.IS_MAIN == 'false') {
+                    echo "Échec détecté sur branche feature : Nettoyage du conteneur éphémère..."
+                    sh "docker stop ${env.APP_NAME} || true"
+                    sh "docker rm   ${env.APP_NAME} || true"
+                } else {
+                    echo "Échec détecté sur main — Conteneur de production préservé."
+                }
+            }
         }
         cleanup {
             cleanWs(deleteDirs: true, notFailBuild: true)
